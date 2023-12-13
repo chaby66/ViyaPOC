@@ -1,0 +1,25 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/branchStep.yaml
+title: Decision Branch Step
+description: Represents a branch decision flow step.  A branch step contains a list of branchCases and a defaultCase.  During the execution of a branch step each branchCases condition is evaluated in order.  The decision flow will follow the first branchCases who's condition evaluates true.  If no branchCases's condition evaluates true the branchStep's defaultCase path is followed.
+required:
+    - branchType
+properties:
+    name:
+        type: string
+        description: Logical name of this node for business user identification.
+    branchType:
+        type: string
+        format: enumeration
+        description: |
+            One of:
+            * `range` - A branch step with branchType "range" contains branchCases that define a "range" condition for either a variable lower bound, a variable upper bound, or a variable range.
+            * `equals` - A branch step with branchType "equals" contains branchCases that define "equals" conditions.  All conditions in a "equals" branch must use the "=" operator.  Several "equals" conditions may be "OR"ed.
+            * `like` -  A branch step with branchType "like" contains branchCases that define "like" conditions.   All conditions in a "equals" branch must use the "like" operator.  Several "like" conditions may be "OR"ed.
+    branchCases:
+        type: array
+        description: Specifies an array of branchCases.  At execution time each branchCase is evaulated in order.  The "onTrue" path of the first branchCase whose condition(s) evaluates true is followed.  If no branchCase's condition(s) evaluates true the defaultCase path is followed.
+        items: 
+            "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/branchCase.yaml"
+    defaultCase:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/conditionBranch.yaml"
+        description: Specifies the steps to execute if no branchCase's condition(s) evaluate true.

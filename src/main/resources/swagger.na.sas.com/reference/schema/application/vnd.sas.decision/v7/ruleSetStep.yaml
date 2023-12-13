@@ -1,0 +1,19 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/ruleSetStep.yaml
+title: Rule Set Decision Step
+description: Specifies the rule set that is being referenced for this step. Required if type is set to 'application/vnd.sas.decision.step.ruleset'.
+required:
+    - id
+    - versionId
+properties:
+    name: 
+        type: string
+        description: Name of the Rule Set being referenced.
+    id: 
+        type: string
+        description: 'Identifier of the rule set that is being referenced.'
+    versionId:
+          type: string
+          description: Identifier of the rule set version that is being referenced.
+    versionName:
+          type: string
+          description: Name of the version that is being referenced.

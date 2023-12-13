@@ -1,0 +1,25 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/conditionStep.yaml
+title: Decision Condition Step
+description: Represents a condition step within a decision flow.
+required:
+    - lhsTerm
+    - operator
+properties:
+    lhsTerm: 
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/term.yaml"
+        description: Term to compare the rhsTerm or rhsConstant to.
+    rhsTerm: 
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/term.yaml"
+        description: Term to compare the lhsTerm to.
+    rhsConstant: 
+        type: string 
+        description: Specifies the constant to compare the lhsTerm to.
+    operator:
+        type: string
+        description: Specifies the comparison operation to use when to compare the lhsTerm to rhsTerm or rhsConstant.
+    onTrue:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/conditionBranch.yaml"
+        description: Steps to execute if the provided condition evaluates to true.
+    onFalse: 
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/conditionBranch.yaml"
+        description: Steps to execute if the provided condition evaluates to false.

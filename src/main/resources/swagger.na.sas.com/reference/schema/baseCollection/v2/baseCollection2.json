@@ -1,0 +1,39 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id" : "swagger.na.sas.com/reference/schema/baseCollection/v2/baseCollection2.json",
+    "title" : "Base Collection",
+    "description" : "This is a base schema used to define paginated collections of resources. This base schema is extended by other schemas in APIs by adding an 'items' array property. These extensions define the application/vnd.sas.collection media type (version 2)",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "The name of the collection."
+        },
+        "start": {
+            "type": "integer",
+            "description": "The zero-based index of the first item in the collection.",
+            "format" : "int64"
+        },
+        "limit": {
+            "type": "integer",
+            "description": "The number of items that were requested for the collection."
+        },
+        "count": {
+            "type": "integer",
+            "description": "If populated indicates the number of items in the collection.",
+            "format" : "int64"
+        },
+        "accept": {
+            "type": "string",
+            "description": "A space-delimited list of media types from which an `Accept` header may be constructed."
+        },
+        "links": {
+            "type": "array",
+            "description": "The links that apply to the collection.",
+            "items": { "$ref": "../../../../../../swagger.na.sas.com/reference/schema/link/v1/link.json" }
+        },
+        "version": {
+            "type": "integer",
+            "description": "The version number of the collection representation. This representation is version 2."
+            }
+    }
+}

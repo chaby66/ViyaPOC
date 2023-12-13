@@ -1,0 +1,34 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/recordContactStep.yaml
+title: Record Decision Contact Step
+description: Represents the user specifying that contact information should be recorded at this step within the flow and details that should be recorded.
+required:
+    - ruleFiredTracking
+    - pathTracking
+    - name
+properties:
+    name: 
+        type: string
+        description: Logical name of this node for business user identification.
+    ruleFiredTracking: 
+        type: boolean
+        description: Flag which determines whether the current rule fired information will be recorded with the contact information being written.
+    pathTracking: 
+        type: boolean
+        description: Flag which determines whether the current path of steps that were taken in the decision up to this step will be recorded with the contact information being written.
+    treatmentDatagridTerm:
+          type: string
+          description: The name of the decision signature entry to which contains treatment information that should be recorded during the contact for future response tracking. Provided data grid term must have a 'treatmentId' column extension.
+    responseTrackingVariableName:
+          type: string
+          description: The name of the system generated variable that will be created in the output of this decision that will contain a unique response tracking code that can be used for updating contact information in the Subject Contact API that corresponds to this step. This value will be determined by the service.
+    excludeFromContactAggregation:
+          type: boolean
+          description: Flag that determines the setting of the 'excludeFromAggregation' member when contacts from this step are recorded. If not set it defaults to false.
+    channelTerm:
+          type: string
+          description: The name of the decision signature entry to which contains channel that should be recorded during the contact for future response tracking. Provided term should be a 'string' type.
+    auditTerms: 
+        type: array
+        descriptions: List of signature entries that will be included within the recorded contact information. 
+        items:
+            "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/auditTerm.yaml"

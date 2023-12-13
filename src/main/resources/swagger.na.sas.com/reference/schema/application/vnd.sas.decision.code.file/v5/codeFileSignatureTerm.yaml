@@ -1,0 +1,36 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision.code.file/v5/codeFileSignatureTerm.yaml
+title: Code File Signature Term
+description: Represents the code file signature term.
+required:
+- name
+- dataType
+- direction
+properties:
+  name: 
+    type: string
+    description: The name of the code file signature term.
+  dataType: 
+    type: string
+    description: Data type of the code file signature term.
+    enum:
+    - string
+    - decimal
+    - integer
+    - dataGrid
+    - date
+    - datetime
+    - unknown
+  direction: 
+    type: string
+    description: Direction of the code file signature term.
+    enum:
+    - input
+    - inOut
+  length:
+    type: integer
+    description: Length of the signature term. Valid for string data type.
+  dataGridExtension:
+    type: array
+    items:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision.code.file/v5/codeFileSignatureTermDataGridExtension.yaml"
+    description: Metadata information about data grid columns.

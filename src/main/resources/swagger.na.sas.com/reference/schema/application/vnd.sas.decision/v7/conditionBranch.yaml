@@ -1,0 +1,28 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/conditionBranch.yaml
+title: Decision Condition Branch
+description: Represents a branch of a decision condition.
+required:
+    - lhsTerm
+    - operator
+properties:
+    id:
+        type: string
+        description: The system-assigned unique ID for this object
+    createdBy:
+        type: string
+        description: The user who created the onTrue path.
+    creationTimeStamp:
+        type: string
+        format: date-time
+        description: The date and time that the onTrue path was created.
+    modifiedBy:
+        type: string
+        description: The userId of the authenticated user who last updated the onTrue path.
+    modifiedTimeStamp:
+        type: string
+        format: date-time
+        description: The date and time that the onTrue path was last modified.
+    steps: 
+        type: array 
+        items:
+            "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/step.yaml"

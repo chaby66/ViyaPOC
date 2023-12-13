@@ -1,0 +1,51 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision.node.type/v1/decisionNodeTypeContent.yaml
+title: Decision Node Type Content
+description: Contains information needed to extend the decision flow with a new node type including the decision node type's signature and provision for acquiring decision step code for the associated decision node type.
+x-sas-media-type:
+  name: application/vnd.sas.decision.node.type.content
+  version: 1
+required:
+  - contentType
+properties:
+  id:
+    type: string
+    description: The system-assigned unique ID for this object.
+  nodeTypeId:
+    type: string
+    description:  The id of the decision node type associated with this decision node type content
+  contentType:
+    type: string
+    description:  The type of logic to be executed when the associated decision node type is included in a decision flow (DS2 is only support contentType as of now)
+  staticContent:
+    type: string
+    description:  The logic to be executed when a decision node type of type "static" is is executed.  If the decision node type is not of type "static" this property should be null
+  nodeTypeSignatureTerms:
+    type: array
+    description: Signature variables of the decision node type.
+    items:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision.step.code/v1/decisionStepCodeSignatureTerm.yaml"
+  createdBy:
+    type: string
+    description: The user who created the object used in decision step.
+  creationTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the object used in the decision step was created.
+  modifiedBy:
+    type: string
+    description: The user ID of the authenticated user who last updated the object used in the decision step.
+  modifiedTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the object used in the decision step was last modified.
+  links:
+    type: array
+    description: Zero or more links to related resources or operations.
+    items:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/link/v1/link.json"
+  version:
+    type: integer
+    description: This media type's schema version number. This representation is version
+      1.
+
+

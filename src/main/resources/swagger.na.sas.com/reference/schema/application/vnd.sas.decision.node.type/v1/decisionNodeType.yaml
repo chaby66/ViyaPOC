@@ -1,0 +1,77 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision.node.type/v1/decisionNodeType.yaml
+title: Decision Node Type
+description: Contains information needed to extend the decision flow with a new node type
+x-sas-media-type:
+  name: application/vnd.sas.decision.node.type
+  version: 1
+required:
+  - name
+  - hasInputs
+  - hasOutputs
+  - type
+properties:
+  id:
+    type: string
+    description: The system-assigned unique ID for this object.
+  name:
+    type: string
+    description: The name of the DecisionNodeType used by the infrastructure to indentify this node type (no spaces or special characters).
+  description:
+    type: string
+    description: The description of the DecisionNodeType.
+  hasProperties:
+    type: boolean
+    description:  indicates whether or not the DecisionNodeType should be present a properties pane when included in a decision flow
+  hasInputs:
+    type: boolean
+    description:  indicates that the DecisionNodeType has inputs which should be mapped to decision flow or datagrid variables
+  hasOutputs:
+    type: boolean
+    description:  indicates that the DecisionNodeType has outputs which should be mapped to decision flow or datagrid variables
+  inputDatagridMappable:
+    type: boolean
+    description:  indicates that the DecisionNodeType's inputs may be mapped to datagrid extensions
+  outputDatagridMappable:
+    type: boolean
+    description:  indicates that the DecisionNodeType's outputs may be mapped to datagrid extensions
+  inputDecisionTermMappable:
+    type: boolean
+    description:  indicates that the DecisionNodeType's inputs may be mapped to decision variables
+  outputDecisionTermMappable:
+    type: boolean
+    description:  indicates that the DecisionNodeType's outputs may be mapped to decision variables
+  independentMappings:
+    type: boolean
+    description: indicates whether same-named inputs/outputs may be mapped independently
+  themeId:
+    type: string
+    description: indicating a standard theme which will result in a unique icon and color.  The available themes are DNT_THEME1, DNT_THEME2, DNT_THEME3, DNT_THEME4, and DNT_THEME5
+  type:
+    type: string
+    description: the type for this DecisionNodeType (static is only supported type as of now)
+  createdBy:
+    type: string
+    description: The user who created the object used in decision step.
+  creationTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the object used in the decision step was created.
+  modifiedBy:
+    type: string
+    description: The user ID of the authenticated user who last updated the object used in the decision step.
+  modifiedTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the object used in the decision step was last modified.
+
+  links:
+    type: array
+    description: Zero or more links to related resources or operations.
+    items:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/link/v1/link.json"
+  version:
+    type: integer
+    description: This media type's schema version number. This representation is version
+      1.
+
+

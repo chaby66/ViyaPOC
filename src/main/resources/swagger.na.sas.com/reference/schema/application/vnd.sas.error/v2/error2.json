@@ -1,0 +1,54 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id" : "swagger.na.sas.com/reference/schema/application/vnd.sas.error/v2/error2.json",
+    "title" : "Error",
+    "description": "The representation of an error.",
+    "x-sas-media-type" : {
+        "name" : "application/vnd.sas.error",
+        "version" : 2
+    },
+    "required" : [ "httpStatusCode", "version"],
+    "properties": {
+        "message": {
+            "type": "string",
+            "description": "The message for the error."
+        },
+        "id": {
+            "type": "string",
+            "description": "The string ID for the error."
+        },
+        "errorCode": {
+            "type": "integer",
+            "description": "The numeric ID for the error."
+        },
+        "httpStatusCode": {
+            "type": "integer",
+            "description": "The HTTP status code for the error."
+        },
+        "details": {
+            "type": "array",
+            "description": "Messages that provide additional details about the cause of the error.",
+            "items": {
+                "type": "string"
+            }
+        },
+        "remediation": {
+            "type": "string",
+            "description": "A message that describes how to resolve the error."
+        },
+        "errors": {
+            "type": "array",
+            "description": "Any additional errors that occurred.",
+            "items" :  { "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.error/v2/error2.json" }
+        },
+        "links": {
+            "type": "array",
+            "description" : "The links that apply to the error.",
+            "items": { "$ref": "../../../../../../swagger.na.sas.com/reference/schema/link/v1/link.json" }
+        },
+        "version": {
+            "type": "integer",
+            "description": "The version number of the error representation. This representation is version 2."
+        }
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id" : "swagger.na.sas.com/reference/schema/application/vnd.sas.api/v1/api.json",
+    "title" : "API",
+    "description" : "The list of links to top-level resources and operations available from the root of the API.",
+    "x-sas-media-type" : {
+        "name": "application/vnd.sas.api",
+        "version": 1
+    },
+    "required" : [
+        "version",
+        "links"
+    ],
+    "properties": {
+        "version": {
+            "type": "integer",
+            "description": "The version number of the API representation. This is version 1.",
+            "minimum" : 1
+        },
+        "links" : {
+            "description": "The API's top-level links.",
+            "type" : "array",
+            "items" : { "$ref" : "../../../../../../swagger.na.sas.com/reference/schema/link/v1/link.json"  }
+        }
+    }
+}

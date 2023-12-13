@@ -1,0 +1,12 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.business.rule.set/v3/signatureTermReference.yaml
+title: Signature Term Reference
+description: A reference to a signature term.
+required:
+- name
+properties:
+  id:
+    type: string
+    description: The id for the signature term. This will be populated by the system if not provided.
+  name:
+    type: string
+    description: Name of the term that is being referenced within the objects signature.

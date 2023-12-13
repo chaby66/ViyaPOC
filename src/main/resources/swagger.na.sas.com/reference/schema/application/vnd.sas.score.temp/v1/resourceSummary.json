@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "swagger.na.sas.com/reference/schema/application/vnd.sas.score.temp/v1/resourceSummary.json",
+  "title": "Resource Summary",
+  "description": "Provides the base summary information of any object. This represents application/vnd.sas.summary media type (version 1).",
+  "x-sas-media-type": {
+    "name": "application/vnd.sas.summary",
+    "version": 1
+  },
+  "required": [
+    "id",
+    "name",
+    "type"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "unique identifier of the object"
+    },
+    "name": {
+      "type": "string",
+      "description": "name of the object"
+    },
+    "type": {
+      "type": "string",
+      "description": "The type name for this object."
+    },
+    "description": {
+      "type": "string",
+      "description": "description of the object"
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "user responsible for creating the object"
+    },
+    "creationTimeStamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "DateTime of object creation"
+    },
+    "modifiedBy": {
+      "type": "string",
+      "description": "user responsible for most recent modification of the object"
+    },
+    "modifiedTimeStamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "DateTime of last object modification"
+    },
+    "links": {
+      "type": "array",
+      "description": "Paging links that apply to this object",
+      "items": {
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/link/v1/link.json"
+      }
+    },
+    "version": {
+      "type": "integer",
+      "description": "This media type's schema version number. This representation is version 1."
+    }
+  }
+}

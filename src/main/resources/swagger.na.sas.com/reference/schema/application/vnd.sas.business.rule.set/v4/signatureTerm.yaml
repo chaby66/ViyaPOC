@@ -1,0 +1,66 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.business.rule.set/v4/signatureTerm.yaml
+title: Signature Term
+description: Business term defined by the user to be used as a variable for usage in expressions and mappings within rule sets or decisions. Terms of type data grid can have their internal structure defined further using extensions, these are fields that are found within each row of a data grid term.
+required:
+- name
+- dataType
+- direction
+properties:
+  id:
+    type: string
+    description: The system-assigned unique ID for this object
+  name:
+    type: string
+    description: Name of the term that can be referenced. Term names must be unique within a rule set.
+  description:
+    type: string
+    description: Description of the term
+  defaultValue:
+      type: object
+      description: The initial value of the term.
+  length:
+    type: integer
+    description: Suggested length for use when generating code.
+  createdBy:
+    type: string
+    description: The user who created the term.
+  creationTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the term was created.
+  modifiedBy:
+    type: string
+    description: The userId of the authenticated user who last updated the term.
+  modifiedTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the term was last modified.
+  dataType:
+    type: string
+    description: The type of data that the term is intended to be used with. Terms can be loosely typed with the 'any' type, this type is only assigned by the service when rules POST'ed with 'createVariables=true' and no type can be determined.
+    format: enumeration
+    enum:
+    - string
+    - decimal
+    - integer
+    - date
+    - datetime
+    - dataGrid
+    - any
+  direction:
+    type: string
+    description: Declaration of how the data is to be used during execution as input, output, both input and output or none if the term is for internal rule set usage only.
+    format: enumeration
+    enum:
+    - input
+    - output
+    - inOut
+    - none
+  dataGridExtension:
+    type: array
+    description: Fields that are found within the defined data grid type term. These fields are unique only within the data grid and can overlap with other term names. This member is only applicable for terms of type 'dataGrid'.
+    items:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.business.rule.set/v4/signatureTermExtension.yaml"
+  globalVariableId:
+    type: string
+    description: The id of the global variable that this term references.

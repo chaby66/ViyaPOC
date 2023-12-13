@@ -1,0 +1,23 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/mapping.yaml
+title: Decision Step Mapping
+description: Represents the mapping between the terms input and output by a decision step and the signature entries of the decision.
+required:
+    - stepTermName
+    - direction
+properties:
+    stepTermName: 
+        type: string
+        description: The name of the step term to which the decision signature entry is mapped.
+    direction: 
+        type: string
+        description: 'Describes whether mapping is an input, output, or both from the point of view of the decision step.'
+        enum:
+            - input
+            - output
+            - inOut
+    targetDecisionTermName:
+          type: string
+          description: The name of the decision signature entry to which a step term will be mapped.
+    targetDataGridTermName:
+          type: string
+          description: The name of the term inside the mappedDataGrid term to which a step term will be mapped.

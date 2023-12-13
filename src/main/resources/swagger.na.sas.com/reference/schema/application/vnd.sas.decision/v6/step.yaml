@@ -1,0 +1,63 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/step.yaml
+title: Condition Decision Step 
+description: A condition step within a decision.
+x-sas-media-type: 
+   name: application/vnd.sas.decision.step.condition
+   version: 2
+required: 
+   - type
+properties: 
+  type:
+    type: string
+    description: Type of step being referenced within the decision flow. Different members are required for each type of step.
+    format: enumeration
+    enum:
+    - application/vnd.sas.decision.step.model
+    - application/vnd.sas.decision.step.ruleset    
+    - application/vnd.sas.decision.step.condition
+    - application/vnd.sas.decision.step.custom.object
+    - application/vnd.sas.decision.step.record.contact
+    - application/vnd.sas.decision.step.branch    
+  id:
+    type: string
+    description: The system-assigned unique ID for this object
+  createdBy:
+    type: string
+    description: The user who created the step.
+  creationTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the step was created.
+  modifiedBy:
+    type: string
+    description: The user ID of the authenticated user who last modified the step.
+  modifiedTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the step was last modified.
+  mappingDataGridName:
+    type: string
+    description: Datagrid signature term name which is used by mapping. Only valid for customObject, ruleSet and model steps.
+  ruleSet:
+    "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/ruleSetStep.yaml"
+    description: Specifies the rule set that is being referenced for this step. Required if type is set to 'application/vnd.sas.decision.step.ruleset'.
+  model:
+    "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/modelStep.yaml"
+    description: Specifies the model that is being referenced for this step. Required if type is set to 'application/vnd.sas.decision.step.model'. 
+  customObject:
+    "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/customObjectStep.yaml"
+    description: Specifies the custom object that is being referenced for this step. Required if type is set to 'application/vnd.sas.decision.step.custom.object'. 
+  condition:
+    "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/conditionStep.yaml" 
+    description: Specifies the condition. Required if type is set to 'application/vnd.sas.decision.step.condition'.
+  branch:
+    "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/branchStep.yaml" 
+    description: Specifies a branch step. Required if type is set to 'application/vnd.sas.decision.step.branch'.
+  recordContact:
+    "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/recordContactStep.yaml" 
+    description: Specific contact recording details that should be taken at this step in the flow. Required if type is set to 'application/vnd.sas.decision.step.record.contact'.
+  mappings: 
+    type: array
+    description: Variable mappings for the model or rule set being referenced. Required if type is set to 'application/vnd.sas.decision.step.model' or 'application/vnd.sas.decision.step.ruleset'. 
+    items: 
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/mapping.yaml"

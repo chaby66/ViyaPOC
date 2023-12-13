@@ -1,0 +1,74 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision.code.file/v5/codeFile.yaml
+title: Code File
+description: >
+  Wrapper to file resource which contains the signature of the code. This
+  represents application/vnd.sas.decision.code.file media type (version 5).
+x-sas-media-type:
+  name: application/vnd.sas.decision.code.file
+  version: 5
+allOf:
+  - $ref: "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision.code.file/v5/codeFileBase.yaml"
+  - type: object
+    required:
+      - fileUri
+    properties:
+      fileUri:
+        type: string
+        format: uri
+        description: Uri of the file resource which contains code.
+      version:
+        type: integer
+        description: >
+          This media type's schema version number. This representation is
+          version 2.
+example:
+  creationTimeStamp: '2017-06-02T15:38:30.988Z'
+  modifiedTimeStamp: '2017-06-02T15:38:30.988Z'
+  createdBy: sasdemo
+  modifiedBy: sasdemo
+  id: 36f6498b-b612-412c-9182-f0bfbd970d51
+  name: BadCar
+  type: decisionDS2CodeFile
+  fileUri: "/files/files/0c7281d8-063d-49dd-be6b-392e9c9e930c"
+  majorRevision: 1
+  minorRevision: 0
+  locked: false
+  status: valid
+  signature:
+  - name: Make
+    dataType: string
+    direction: input
+  - name: Odometer
+    dataType: decimal
+    direction: input
+  - name: Bad
+    dataType: decimal
+    direction: inOut
+  links:
+  - method: GET
+    rel: up
+    href: "/decisions/codeFiles"
+    uri: "/decisions/codeFiles"
+    type: application/vnd.sas.collection
+    itemType: application/vnd.sas.decision.code.file
+  - method: GET
+    rel: self
+    href: "/decisions/codeFiles/36f6498b-b612-412c-9182-f0bfbd970d51"
+    uri: "/decisions/codeFiles/36f6498b-b612-412c-9182-f0bfbd970d51"
+    type: application/vnd.sas.decision.code.file
+  - method: GET
+    rel: alternate
+    href: "/decisions/codeFiles/36f6498b-b612-412c-9182-f0bfbd970d51"
+    uri: "/decisions/codeFiles/36f6498b-b612-412c-9182-f0bfbd970d51"
+    type: application/vnd.sas.summary
+  - method: DELETE
+    rel: delete
+    href: "/decisions/codeFiles/36f6498b-b612-412c-9182-f0bfbd970d51"
+    uri: "/decisions/codeFiles/36f6498b-b612-412c-9182-f0bfbd970d51"
+  - method: POST
+    rel: revisions
+    href: "/decisions/codeFiles/36f6498b-b612-412c-9182-f0bfbd970d51/revisions"
+    uri: "/decisions/codeFiles/36f6498b-b612-412c-9182-f0bfbd970d51/revisions"
+    type: application/vnd.sas.decision.code.file
+    responseType: application/vnd.sas.decision.code.file
+  version: 2

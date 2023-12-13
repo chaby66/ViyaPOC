@@ -1,0 +1,97 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/decision.yaml
+title: Decision
+description: The representation of a decision.
+x-sas-media-type :
+   name: application/vnd.sas.decision
+   version : 6
+required: 
+   - name
+   - signature
+properties: 
+   id:
+      type: string
+      description: The string ID for the decision.
+   name: 
+      type: string 
+      description: The name for the decision.
+   description:
+      type: string 
+      description: The description for the decision.
+   majorRevision:
+     type: integer
+     description: Major version number of the revision being viewed of the decision. This value is assigned by the service, the user only has control on whether the major number or minor number is incremented when creating a new revision.
+   locked:
+     type: boolean
+     description: Flag which indicates if the content being viewed is locked or editable.
+   minorRevision:
+     type: integer
+     description: Minor version number of the current revision of the decision. This value is assigned by the service, the user only has control on whether the major number or minor number is incremented when creating a new revision.
+   creationTimeStamp: 
+      type: string
+      format: date-time 
+      description: The timestamp when the decision was created.
+   createdBy:
+      type: string
+      description: The user ID who created the decision.
+   modifiedTimeStamp:
+      type: string
+      format: date-time
+      description: The timestamp when the decision properties was modified.
+   modifiedBy: 
+      type: string
+      description: The user ID who modified the decision.
+   nodeCount:
+      type: integer
+      description: The total number of decision steps(nodes) in the decision flow.
+   sourceRevisionUri:
+      type: string
+      description: The URI of the decision revision this decision is being created from.
+   copyTimeStamp:
+      type: string
+      format: date-time
+      description: The time stamp when the decision revision was copied.
+   flow:
+      type: array
+      description: The sequence of rule sets, models, custom objects, branches, and conditions which represent the decision making flow object.
+      items:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/step.yaml"
+   signature:
+      type: array
+      items:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.business.rule.set/v4/signatureTerm.yaml"
+      description: The set of terms local to this decision with input and output behavior.
+   subjectLevel: 
+      type: string
+      description: Indicates the kind of subject Id.   
+   subjectId:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.business.rule.set/v3/signatureTermReference.yaml"
+      description: The reference for the term used to identify the subject.
+   folderType: 
+      type: string
+      description: Indicates the kind of folder where the decision is housed.   
+   links:
+      type: array 
+      description: Links to related resources or operations.
+      items:
+         "$ref": "../../../../../../swagger.na.sas.com/reference/schema/link/v1/link.json"
+   version:
+      type: integer
+      description: The version number of the domain representation. This representation is version 1.
+example:
+  name: Credit Approval
+  signature:
+  - name: customerName
+    dataType: string
+    direction: input
+  - name: yearsOnJob
+    dataType: integer
+    direction: input
+  - name: address
+    dataType: string
+    direction: input
+  - name: creditScore
+    dataType: decimal
+    direction: output
+  - name: approved
+    dataType: boolean
+    direction: output

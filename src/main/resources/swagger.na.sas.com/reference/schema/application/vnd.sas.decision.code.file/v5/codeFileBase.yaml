@@ -1,0 +1,81 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision.code.file/v5/codeFileBase.yaml
+title: Code File Base
+description: >
+    The base properties for a code file. This should be used as a base to build
+    the concrete representations consumed by the API.
+required:
+  - type
+properties:
+  id:
+    type: string
+    description: The system-assigned unique ID for this object
+  name:
+    type: string
+    description: The code file name
+  description:
+    type: string
+    description: The code file description
+  createdBy:
+    type: string
+    description: The user who created the code file.
+  creationTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the code file was created.
+  modifiedBy:
+    type: string
+    description: The userId of the authenticated user who last updated the code file.
+  modifiedTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the code file was last modified.
+  majorRevision:
+    type: integer
+    description: Major version number of the revision being viewed of the code file. This value is assigned by the service, the user only has control on whether the major number or minor number is incremented when creating a new revision. This is a derived field which is generated on POST.
+  minorRevision:
+    type: integer
+    description: Minor version number of the current revision of the code file. This value is assigned by the service, the user only has control on whether the major number or minor number is incremented when creating a new revision. This is a derived field which is generated on POST.
+  locked:
+    type: boolean
+    description: Flag which indicates if the content of the revision being viewed is locked or editable.
+  type:
+    type: string
+    format: enumeration
+    enum:
+      - decisionDS2CodeFile
+      - decisionSQLCodeFile
+      - decisionPythonFile
+    description: Type of the code.
+  status:
+    type: string
+    format: enumeration
+    enum:
+      - valid
+      - error
+    description: Status of the code content.
+  errorCode:
+    type: integer
+    description: Error code when parsing code content.
+  errorMessage:
+    type: string
+    description: Error message when parsing code content.
+  signature:
+    type: array
+    description: Array of signature terms.
+    items:
+      $ref: "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision.code.file/v5/codeFileSignatureTerm.yaml"
+  folderType:
+    type: string
+    description: Indicates the kind of folder where the code file is housed.
+  sourceRevisionUri:
+    type: string
+    description: The URI of the code file revision this code file is being created from.
+  copyTimeStamp:
+    type: string
+    format: date-time
+    description: The time stamp when the code file revision was copied.
+  links:
+    type: array
+    description: Zero or more links to related resources or operations.
+    items:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/link/v1/link.json"

@@ -1,0 +1,20 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.score.definition/v1/mapping.yaml
+title: Mapping
+description: Assigning Input Data column to a variable of the generated Mapped Code of Score Object. This doesn't represent any top-level media type.
+required:
+- variableName
+- mappingType
+properties:
+  variableName:
+    type: string
+    description: Name of the Score Object's variable.
+  mappingType:
+    description: The mapping type.
+    type: string
+    format: enumeration
+    enum:
+    - datasource
+    - static
+  mappingValue:
+    type: object
+    description: Value that is assigned to Score Object's variable. If the mappingType is dataSource then this should be column name of the Input Data. If the mappingType is static then this should be a constant value. Required if the mappingType is datasource.

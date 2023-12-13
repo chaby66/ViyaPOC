@@ -1,0 +1,9 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/auditTerm.yaml
+title: Audit Term
+description: Represents a term that is being recorded for auditing purposes during contact recording.
+required:
+- name
+properties:
+  name:
+    type: string
+    description: Name of the term that is being referenced from the signature.

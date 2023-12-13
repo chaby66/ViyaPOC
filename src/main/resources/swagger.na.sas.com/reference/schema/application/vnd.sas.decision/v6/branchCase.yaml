@@ -1,0 +1,19 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/branchCase.yaml
+title: Decision Case
+description: Represents a single case within a branch step of a decision flow.  A case may contain a simpleCondition or compoundCondition, but not both.
+properties:
+    id:
+      type: string
+      description: The system-assigned unique ID for this object
+    label:
+        type: string
+        description: A label for the branch case.
+    simpleCondition:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/simpleBranchCondition.yaml"
+        description: Specifies a simpleCondition to evaluate.  A simpleCondition must be defined if compoundCondition is not defined.  When executing the step if the condition evaluates true the onTrue "steps" path is followed.
+    compoundCondition:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/compoundBranchCondition.yaml"
+        description: Specifies a compoundCondition to evaluate. A compoundCondition must be defined if simpleCondition is not defined.  When executing the step if the condition evaluates true the onTrue "steps" path is followed.
+    onTrue:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/conditionBranch.yaml"
+        description: Specifies the steps to execute if the simpleCondition or compoundCondition evaluates to true.

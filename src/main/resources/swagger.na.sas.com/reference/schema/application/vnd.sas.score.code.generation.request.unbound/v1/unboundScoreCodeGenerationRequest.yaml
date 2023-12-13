@@ -1,0 +1,32 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.score.code.generation.request.unbound/v1/unboundScoreCodeGenerationRequest.yaml
+title: Unbound Code Generation Request
+description: Request containing hints and mappings to generate Mapped Code not bound to a score definition.
+x-sas-media-type:
+  name: application/vnd.sas.score.code.generation.request.unbound
+  version: 1
+properties:
+  mappings:
+    type: array
+    description: Array of mappings between Score Object variables and the table the code will be executed against.
+    items:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.score.definition/v1/mapping.yaml"
+  hints:
+    type: object
+    description: Hints for generating the code. Hints are specific to the type of object which the code is being requested for.
+    additionalProperties:
+      type: string
+  version:
+    type: integer
+    description: This media type's schema version number. This representation is version
+      1.
+example:
+  scoreDefinitionId: 9f0c13ae-6a27-11e6-8b77-86f30ca893d3
+  hints:
+    outputLibraryName: PUBLIC
+  mappings:
+  - variableName: Make
+    mappingType: datasource
+    mappingValue: vehmake
+  - variableName: Maximum_Mileage
+    mappingType: static
+    mappingValue: 100000

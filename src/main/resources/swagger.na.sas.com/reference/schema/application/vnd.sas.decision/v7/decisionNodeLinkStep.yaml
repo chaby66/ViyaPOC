@@ -1,0 +1,13 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v7/decisionNodeLinkStep.yaml
+title: Node Link Decision Step
+description: Represents a link withing a decision flow which directs the execution flow of the decision to an arbitrary node based on the linkLabel of the target node.
+required:
+    - id
+    - decisionNodeLinkTarget
+properties:
+    id: 
+        type: string
+        description: 'Identifier of the decisionNodeLinkStep that is being referenced.'
+    decisionNodeLinkTarget:
+          type: string
+          description: 'The linkLabel of the node to which execution flow should be directed.'

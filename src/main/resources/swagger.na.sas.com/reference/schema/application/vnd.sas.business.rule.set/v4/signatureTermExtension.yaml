@@ -1,0 +1,24 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.business.rule.set/v4/signatureTermExtension.yaml
+title: Signature Term Extension
+description: Signature Term Extension is used to store the column information of a Data Grid variable.
+required:
+- name
+- dataType
+properties:
+  id:
+    type: string
+    description: The system-assigned unique ID for this object
+  name:
+    type: string
+    description: Name of the extension that can be referenced from rule logic. Extension must be unique within a data grid.
+  length:
+    type: integer
+    description: Suggested length for use when generating code.
+  dataType:
+    type: string
+    description: The type of data that the extension is intended to be used with.
+    format: enumeration
+    enum:
+    - string
+    - decimal
+    - integer

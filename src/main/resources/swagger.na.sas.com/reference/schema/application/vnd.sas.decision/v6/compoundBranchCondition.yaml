@@ -1,0 +1,28 @@
+id: "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/compoundBranchCondition.yaml"
+title: Decision Compound Branch Condition
+description: Represents a compound condition.  The left hand side (lhs), right hand side (rhs) and operator of the condition are evaualted to produce a boolean result of "true" or "false".  A compound condition has a left hand side (lhsSimpleCondition or lhsCompoundCondition) a right hand side (rhsSimpleCondition or rhsCompoundCondition) and a boolean operator.
+required: 
+   - booleanOperator
+properties:
+    id:
+      type: string
+      description: The system-assigned unique ID for this object
+    booleanOperator:
+        type: string
+        description: Specifies the booleanOperator of the condition.
+        format: enumeration
+        enum:
+        - AND
+        - OR
+    lhsSimpleCondition:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/simpleBranchCondition.yaml"
+        description: Specifies lhsSimpleCondition of the condition to evaluate.  If a lhsSimpleCondition is present the lhsCompoundCondition will not be present.
+    lhsCompoundCondition:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/compoundBranchCondition.yaml"
+        description: Specifies lhsCompoundCondition of the condition to evaluate.  If a lhsCompoundCondition is present the lhsSimpleCondition will not be present.
+    rhsSimpleCondition:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/simpleBranchCondition.yaml"
+        description: Specifies rhsSimpleCondition of the condition to evaluate.  If a rhsSimpleCondition is present the rhsCompoundCondition will not be present.
+    rhsCompoundCondition:
+        "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision/v6/compoundBranchCondition.yaml"
+        description: Specifies rhsCompoundCondition of the condition to evaluate.  If a rhsCompoundCondition is present the rhsSimpleCondition will not be present.

@@ -1,0 +1,50 @@
+id: swagger.na.sas.com/reference/schema/application/vnd.sas.decision.step.code/v1/decisionStepCode.yaml
+title: Decision Step Code
+description: Contains the structure of code that is needed to generate the decision code.
+x-sas-media-type:
+  name: application/vnd.sas.decision.step.code
+  version: 1
+properties:
+  id:
+    type: string
+    description: The system-assigned unique ID for this object.
+  name:
+    type: string
+    description: The name of the object used in decision step. 
+  description:
+    type: string
+    description: The description of the object used in decision step.
+  createdBy:
+    type: string
+    description: The user who created the object used in decision step.
+  creationTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the object used in the decision step was created.
+  modifiedBy:
+    type: string
+    description: The user ID of the authenticated user who last updated the object used in the decision step.
+  modifiedTimeStamp:
+    type: string
+    format: date-time
+    description: The date and time that the object used in the decision step was last modified.
+  code:
+    type: string
+    description: The code of the object used in the decision step.
+  type:
+    type: string
+    description: The object type of the object used in the decision step.
+  signature:
+    type: array
+    description: Signature variables of the object used in the decision step.
+    items:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/application/vnd.sas.decision.step.code/v1/decisionStepCodeSignatureTerm.yaml"
+  links:
+    type: array
+    description: Zero or more links to related resources or operations.
+    items:
+      "$ref": "../../../../../../swagger.na.sas.com/reference/schema/link/v1/link.json"
+  version:
+    type: integer
+    description: This media type's schema version number. This representation is version
+      1.
