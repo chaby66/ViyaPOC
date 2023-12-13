@@ -1,0 +1,59 @@
+    declare package http h();
+    declare package json j();
+    declare varchar(10000000) req_body resp_body input_json v_data;
+    declare int rc tmpi status tokenType parseFlags;
+	declare nvarchar(100) corr_id;
+	declare nvarchar(100) time_zone;
+
+    dcl package pymas py;
+    dcl double pystop;
+	dcl nvarchar(10485760) pypgm;
+	dcl double revision;
+	
+	
+	corr_id = '123456';
+	time_zone = 'Europe/Budapest';
+	
+	input_json = '';
+{SETUP_INPUT}
+    
+    req_body='{	"version": 1, "correlationId": "'||corr_id||'", "clientTimeZone": "'||time_zone||'", "inputs": '||input_json||' }';
+    put 'req_body: ' req_body;	
+	h.createPOSTMethod('http://10.42.200.94:9086/api/v1/engine/{SP_NAME}');
+	h.setRequestContentType('application/json; charset=utf-8');
+	h.addRequestHeader('Accept', '*/*');
+	h.setUsername('admin');
+	h.setPassword('Pass1234');
+	
+	h.SETREQUESTBODYASSTRING(strip(req_body));
+	h.executeMethod();
+	status = h.getStatusCode();   /* get the HTTP status code */
+    put 'HEAD method created for resource:' status;
+	h.getResponseBodyAsString(resp_Body, rc);
+	rc=j.createParser();        
+	rc=j.SETPARSERINPUT( resp_Body );	
+    put 'resp_Body: ' resp_Body;	
+	rc = j.destroyParser();
+
+	py = _new_ pymas();
+	rc = py.useModule('"CODE_FILE_SCORE_py_-1990607437"', 1);
+	rc = py.appendSrcLine(''''''' List all output parameters as comma-separated values in the "Output:" docString. Do not specify "None" if there is no output parameter. ''''''');
+	rc = py.appendSrcLine('import json');
+	rc = py.appendSrcLine('');
+	rc = py.appendSrcLine('def execute (v_body,v_json_path,is_grid):');
+	rc = py.appendSrcLine('  ''Output:v_data''');
+	rc = py.appendSrcLine('  v_data = json.loads(v_body)');
+	rc = py.appendSrcLine('  jp = v_json_path.split(".")');
+	rc = py.appendSrcLine('  for i in jp:');
+	rc = py.appendSrcLine('    if v_data[i] != None:');
+	rc = py.appendSrcLine('      v_data = v_data[i]');
+	rc = py.appendSrcLine('  if is_grid == 0:');
+	rc = py.appendSrcLine('    return str(v_data)');
+	rc = py.appendSrcLine('  return json.dumps(v_data)');
+	pypgm = py.getSource();
+	revision = py.publish(pypgm, '"CODE_FILE_SCORE_py_-1990607437"');
+	rc = py.useMethod('execute');
+	
+{SETUP_OUTPUT}
+	
+	rc = j.destroyParser();
