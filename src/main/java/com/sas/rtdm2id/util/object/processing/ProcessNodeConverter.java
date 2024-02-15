@@ -17,8 +17,12 @@ import com.sas.rtdm2id.model.id.rules.Signature;
 import com.sas.rtdm2id.model.rtdm.*;
 import com.sas.rtdm2id.model.rtdm.extension.Value;
 import com.sas.rtdm2id.model.rtdm.extension.VarRef;
+import com.sas.rtdm2id.otp.OtpService;
 import com.sas.rtdm2id.util.ViyaApi;
 import com.sas.rtdm2id.util.model.IBVariableDO;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -33,12 +37,14 @@ import java.util.regex.Pattern;
 
 import static com.sas.rtdm2id.util.model.RTDM2IDConstants.*;
 
+@Slf4j
 @Component
 public class ProcessNodeConverter {
     private static final String NEW_LINE_STRING = "\n";
     private final RestTemplate restTemplate;
     private final CommonProcessing commonProcessing;
     private final MapStorage mapStorage;
+    private final OtpService otpService;
 
     private static final String PACKAGE_NAME_REGEX = "(\n\\s*package\\s+)([^\\s/;]+)(.*)";//"(?<!dcl\\s{1,1000}|declare\\s{1,1000}|returns\\s{1,1000}|in_out\\s{1,1000}|end|[,\\(]\\s{0,10000})package\\s+[^\\s/;]+";
     private static final Pattern packageNamePattern = Pattern.compile(PACKAGE_NAME_REGEX,Pattern.CASE_INSENSITIVE);
@@ -50,6 +56,9 @@ public class ProcessNodeConverter {
     private static final Pattern javaComment2Pattern = Pattern.compile(JAVA_COMMENT_TYPE_2_REGEX,Pattern.CASE_INSENSITIVE);
 
     private static final String EMPTY_STRING = "";
+
+    @Autowired
+    Environment env;
 
     // RTDM IBVariableValueDO variable type constants
     public static final int VAR_VALUE_TYPE_DOUBLE = 1;
@@ -69,10 +78,11 @@ public class ProcessNodeConverter {
 
     public static final String FALSE_STRING = "false";
 
-    public ProcessNodeConverter(RestTemplate restTemplate, CommonProcessing commonProcessing, MapStorage mapStorage) {
+    public ProcessNodeConverter(RestTemplate restTemplate, CommonProcessing commonProcessing, MapStorage mapStorage, OtpService otpService) {
         this.restTemplate = restTemplate;
         this.commonProcessing = commonProcessing;
         this.mapStorage = mapStorage;
+        this.otpService = otpService;
     }
 
     public List<Step> addCustomObjectStep(ProcessNodeDataDO.Process process, Decision decision, Short objId,
@@ -408,7 +418,12 @@ public class ProcessNodeConverter {
         } else if (GROOVY_CONSTANT.equals(process.getProcess().getProcessTypeDescription())
                 || WEB_SERVICE_CONSTANT.equals(process.getProcess().getProcessTypeDescription())
                 || BUSINESS_RULES_CONSTANT.equals(process.getProcess().getProcessTypeDescription())) {
-            customNodeRequest.setBody(processJavaCodeOrWebServiceOrBusinessRulesForId(process));
+            if (List.of(env.getActiveProfiles()).contains("otp")) {
+                log.info("Creating ds2 codefile from groovy.");
+                customNodeRequest.setBody(otpService.precessGroovyCode(process));
+            } else {
+                customNodeRequest.setBody(processJavaCodeOrWebServiceOrBusinessRulesForId(process));
+            }
             customNodeRequest.setType(DECISION_DS2_CODE_FILE_CONSTANT);
         } else {
             customNodeRequest.setBody(modifyDataProcessToSqlNode(process.getProcess()));

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class Rtdm2idApplicationTests {
+public class Rtdm2idApplicationTests {
 
     @Test
     void contextLoads() {

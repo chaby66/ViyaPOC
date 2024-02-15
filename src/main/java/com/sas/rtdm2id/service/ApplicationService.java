@@ -11,8 +11,10 @@ import com.sas.rtdm2id.exception.ClientIdException;
 import com.sas.rtdm2id.exception.OAuthTokenException;
 import com.sas.rtdm2id.model.dto.rtdm.model.ClientIdResponse;
 import com.sas.rtdm2id.model.dto.rtdm.model.OAuthTokenResponse;
+import com.sas.rtdm2id.model.id.core.Folder;
 import com.sas.rtdm2id.model.id.decision.Decision;
 import com.sas.rtdm2id.model.rtdm.Batch;
+import com.sas.rtdm2id.otp.OtpService;
 import com.sas.rtdm2id.util.Converter;
 import com.sas.rtdm2id.util.MarshallerWrapper;
 import com.sas.rtdm2id.util.ViyaApi;
@@ -21,6 +23,7 @@ import com.sas.rtdm2id.util.object.processing.ProcessNodeConverter;
 import com.sas.rtdm2id.util.object.processing.SubDiagramNodeConverter;
 import com.sas.rtdm2id.util.tree.impl.GenericTree;
 import com.sas.rtdm2id.util.tree.impl.TreeUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -47,10 +50,13 @@ public class ApplicationService {
     private final CommonProcessing commonProcessing;
     private final TreeUtil treeUtil;
     private final MapStorage mapStorage;
+    private final OtpService otpService;
     Map<String, OAuthTokenResponse> oAuthTokenResponseMap = new HashMap<>();
     Map<String, Instant> expirationTimeMap = new HashMap<>();
 
-    public ApplicationService(RestTemplate restTemplate, MarshallerWrapper marshallerWrapper, Converter converter, ProcessNodeConverter processNodeConverter, SubDiagramNodeConverter subDiagramNodeConverter, CommonProcessing commonProcessing, TreeUtil treeUtil, MapStorage mapStorage) {
+    public ApplicationService(RestTemplate restTemplate, MarshallerWrapper marshallerWrapper, Converter converter,
+                              ProcessNodeConverter processNodeConverter, SubDiagramNodeConverter subDiagramNodeConverter,
+                              CommonProcessing commonProcessing, TreeUtil treeUtil, MapStorage mapStorage, OtpService otpService) {
         this.restTemplate = restTemplate;
         this.marshallerWrapper = marshallerWrapper;
         this.converter = converter;
@@ -59,6 +65,7 @@ public class ApplicationService {
         this.commonProcessing = commonProcessing;
         this.treeUtil = treeUtil;
         this.mapStorage = mapStorage;
+        this.otpService = otpService;
     }
 
     public OAuthTokenResponse getAccessToken(String baseIp, String login, String password, String protocol) {
@@ -86,22 +93,44 @@ public class ApplicationService {
         }
     }
 
-    public String createDiagram(String baseIp, Batch batch, String login, String password, String protocol, String parentFolderUri) {
-        OAuthTokenResponse oAuthTokenResponse = getAccessToken(baseIp, login, password, protocol);
-        if (oAuthTokenResponse == null) {
-            return "Could not get access token for ip = " + baseIp + " try to get access token again!";
+    public String createDiagram(String baseIp, Batch batch, String token, String login, String password, String protocol, String parentFolderUri) {
+        OAuthTokenResponse oAuthTokenResponse;
+
+        if (StringUtils.isNotEmpty(token)) {
+            oAuthTokenResponse = OAuthTokenResponse.builder()
+                    .accessToken(token)
+                    .expiresIn(3600)
+                    .build();
+
+            oAuthTokenResponseMap.put(baseIp, oAuthTokenResponse);
+
+            Instant expirationTime = Instant.now().plusSeconds(oAuthTokenResponse.getExpiresIn());
+            expirationTimeMap.put(baseIp, expirationTime);
+            mapStorage.setBaseIp(baseIp);
+            mapStorage.setAccessToken(oAuthTokenResponse.getAccessToken());
+            mapStorage.setProtocol(protocol);
+
+        } else {
+            oAuthTokenResponse = getAccessToken(baseIp, login, password, protocol);
+            if (oAuthTokenResponse == null) {
+                return "Could not get access token for ip = " + baseIp + " try to get access token again!";
+            }
         }
 
         Decision decision = null;
         ResponseEntity<String> response = null;
         String decisionJson = null;
 
-        mapStorage.setParentFolderUri(parentFolderUri);
 
         try {
             if (!commonProcessing.findDecision(batch.getLogicalUnit().getCampaignDO().getName())) {
                 GenericTree<Short> tree = treeUtil.createTree(batch.getLogicalUnit());
                 String accessToken = oAuthTokenResponse.getAccessToken();
+
+                String folderName = parentFolderUri + "/" + batch.getLogicalUnit().getCampaignDO().getName();
+                Folder folder = otpService.findOrAddFolder( baseIp, folderName, accessToken, parentFolderUri, protocol);
+
+                mapStorage.setParentFolderUri(folderName);
                 processNodeConverter.createCustomNodes(batch);
                 commonProcessing.createRuleSets(batch);
                 subDiagramNodeConverter.getSubdiagrams(batch);
@@ -184,4 +213,5 @@ public class ApplicationService {
             throw new OAuthTokenException(e);
         }
     }
+
 }

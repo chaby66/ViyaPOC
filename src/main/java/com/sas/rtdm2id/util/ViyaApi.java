@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 package com.sas.rtdm2id.util;
 
 import com.sas.rtdm2id.model.dto.rtdm.model.ClientIdRegisterBody;
+import com.sas.rtdm2id.model.id.core.Folder;
 import com.sas.rtdm2id.model.id.files.DecisionCodeFile;
 import com.sas.rtdm2id.model.id.files.File;
 import com.sas.rtdm2id.model.id.globals.GlobalVariable;
@@ -195,4 +196,20 @@ public class ViyaApi {
                 .build();
         return new HttpEntity<>(body, headers);
     }
+
+    public static HttpEntity<Object> createGetByNameForFolders(String accessToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, "application/vnd.sas.collection+json");
+        headers.set(HttpHeaders.AUTHORIZATION, BEARER_START + accessToken);
+        return new HttpEntity<>(headers);
+    }
+
+    public static HttpEntity<Object> createPostFolders(Folder folder, String accessToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, "application/json");
+        headers.set(HttpHeaders.AUTHORIZATION, BEARER_START + accessToken);
+        return new HttpEntity<>(folder, headers);
+    }
+
+
 }

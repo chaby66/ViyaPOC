@@ -34,11 +34,12 @@ public class ApplicationController {
     public ResponseEntity<Rtdm2IdResponse<String>> createDiagram(
             @ApiParam(value = "Base ip of Viya server", required = true) @RequestParam String baseIp,
             @ApiParam(value = "RTDM XML", required = true) @RequestBody Batch xml,
+            @ApiParam(value = "token") @RequestParam String token,
             @ApiParam(value = "login") @RequestParam String login,
             @ApiParam(value = "password") @RequestParam String password,
             @RequestParam(value = "parentFolderUri", defaultValue = "/folders/folders/@myFolder", required = false) String parentFolderUri,
             @RequestParam(value = "protocol", defaultValue = "http", required = false) String protocol) {
-        return new ResponseEntity<>(new Rtdm2IdResponse<>(new Meta(0, "OK"), applicationService.createDiagram(baseIp, xml, login, password, protocol, parentFolderUri))
+        return new ResponseEntity<>(new Rtdm2IdResponse<>(new Meta(0, "OK"), applicationService.createDiagram(baseIp, xml, token, login, password, protocol, parentFolderUri))
                 , HttpStatus.CREATED);
     }
 
