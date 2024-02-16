@@ -6,9 +6,11 @@ import com.sas.rtdm2id.model.id.core.Member;
 import com.sas.rtdm2id.model.id.decision.SignatureTerm;
 import com.sas.rtdm2id.model.rtdm.Batch;
 import com.sas.rtdm2id.model.rtdm.ProcessNodeDataDO;
+import com.sas.rtdm2id.model.rtdm.ValueTypeVarInfoDO;
 import com.sas.rtdm2id.util.ViyaApi;
 import com.sas.rtdm2id.util.object.processing.CommonProcessing;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -27,6 +29,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static com.sas.rtdm2id.util.model.RTDM2IDConstants.DOUBLE_CONSTANT;
+import static com.sas.rtdm2id.util.model.RTDM2IDConstants.GLOBALS_FOLDER;
 
 @Slf4j
 @Service
@@ -42,11 +45,14 @@ public class OtpService {
     private final CommonProcessing commonProcessing;
     private final RestTemplate restTemplate;
 
+    private final Environment env;
 
-    public OtpService(OtpGroovyEngineConfig otpGroovyEngineConfig, CommonProcessing commonProcessing, RestTemplate restTemplate) {
+
+    public OtpService(OtpGroovyEngineConfig otpGroovyEngineConfig, CommonProcessing commonProcessing, RestTemplate restTemplate, Environment env) {
         this.otpGroovyEngineConfig = otpGroovyEngineConfig;
         this.commonProcessing = commonProcessing;
         this.restTemplate = restTemplate;
+        this.env = env;
         log.info("OtpGroovyEngineConfig: {}", otpGroovyEngineConfig);
     }
 
@@ -356,6 +362,128 @@ public class OtpService {
         zip.close();
 
         return baos.toByteArray();
+    }
+
+    public boolean isOtpEnvironment() {
+        return List.of(env.getActiveProfiles()).contains("otp");
+    }
+
+    public ValueTypeVarInfoDO createValueTypeVarInfoDOForGlobalVar(String varName) {
+        ValueTypeVarInfoDO varInfo = new ValueTypeVarInfoDO();
+
+        varInfo.setArchivedPublishState((byte) -1);
+        varInfo.setCodeChangeUnpublished("false");
+        varInfo.setCodeEverBeenPublished("false");
+        varInfo.setFirstOccurrenceToPublish((byte) 1);
+        varInfo.setLoadedFromOldDavLocation("false");
+        varInfo.setLoading("false");
+        varInfo.setNeedToPersist("false");
+//        varInfo.setOldVersionNumber();
+        varInfo.setPersisting("false");
+        varInfo.setPublishState((byte) 2);
+        varInfo.setVarInfoArray("false");
+        varInfo.setVarInfoId(GLOBALS_FOLDER + "." + varName);
+        varInfo.setVarName(varName);
+        varInfo.setVarInfoPhysicalName(varName);
+        varInfo.setVarInfoSource("Global");
+        varInfo.setVarInfoSubtype("None");
+        varInfo.setType("Char");
+        varInfo.setVersionNumber(6.4f);
+
+        return varInfo;
+    }
+
+    public ProcessNodeDataDO.Process.InputVariableList.IBVariableDO.Value createValue(ValueTypeVarInfoDO valueTypeVarInfoDO) {
+
+        ProcessNodeDataDO.Process.InputVariableList.IBVariableDO.Value value = new ProcessNodeDataDO.Process.InputVariableList.IBVariableDO.Value();
+
+        value.setArchivedPublishState((byte) -1);
+        value.setCodeChangeUnpublished("false");
+        value.setCodeEverBeenPublished("false");
+        value.setFirstOccurrenceToPublish((byte) 1);
+        value.setLoadedFromOldDavLocation("false");
+        value.setLoading("false");
+        value.setNeedToPersist("false");
+//        value.setOldVersionNumber();
+        value.setValueTypeVarInfoDO(valueTypeVarInfoDO);
+        value.setPersisting("false");
+        value.setPublishState((byte) 2);
+        value.setType((byte) 11);
+        value.setVersionNumber(6.4f);
+
+        return value;
+    }
+
+    public ProcessNodeDataDO.Process.InputVariableList.IBVariableDO.Value createValue(String stringValue) {
+
+        ProcessNodeDataDO.Process.InputVariableList.IBVariableDO.Value value = new ProcessNodeDataDO.Process.InputVariableList.IBVariableDO.Value();
+
+        value.setArchivedPublishState((byte) -1);
+        value.setCodeChangeUnpublished("false");
+        value.setCodeEverBeenPublished("false");
+        value.setFirstOccurrenceToPublish((byte) 1);
+        value.setLoadedFromOldDavLocation("false");
+        value.setLoading("false");
+        value.setNeedToPersist("false");
+//        value.setOldVersionNumber();
+        value.setStringValue(stringValue);
+        value.setPersisting("false");
+        value.setPublishState((byte) 2);
+        value.setType((byte) 11);
+        value.setVersionNumber(6.4f);
+
+        return value;
+    }
+
+
+    public ProcessNodeDataDO.Process.InputVariableList.IBVariableDO createIBVariableDO(String varName,
+                                                                                       ProcessNodeDataDO.Process.InputVariableList.IBVariableDO.Value value) {
+
+        ProcessNodeDataDO.Process.InputVariableList.IBVariableDO spvar = new ProcessNodeDataDO.Process.InputVariableList.IBVariableDO();
+
+        spvar.setArchivedPublishState((byte) -1);
+        spvar.setAttachments("false");
+        spvar.setCodeChangeUnpublished("false");
+        spvar.setCodeEverBeenPublished("false");
+        spvar.setContainsAllPossibleValues("false");
+        spvar.setDefaultValueIsMissing("false");
+//            spvar.setDescription(spvar.set/Description(
+        spvar.setFirstOccurrenceToPublish((byte) 1);
+        spvar.setForceOverwrite("false");
+        spvar.setForced("false");
+        spvar.setHidden("false");
+        spvar.setHideVariable("false");
+//            spvar.setId(spvar.set/Id(
+        spvar.setLevel("Nominal");
+        spvar.setLoadedFromOldDavLocation("false");
+        spvar.setLoading("false");
+//            spvar.setLockedBy(spvar.set/LockedBy(
+        spvar.setMetadataType("Group");
+        spvar.setName(varName);
+        spvar.setNeedToPersist("false");
+        spvar.setNoWritePermission("false");
+//            spvar.setOldVersionNumber(spvar.set/OldVersionNumber(
+        spvar.setPersistState("persistStateOK");
+        spvar.setPersisting("false");
+        spvar.setPhysicalName(varName);
+        spvar.setPresentInDS2Code("false");
+//            spvar.setProcessVariableName(_ACTIN_HAHHVCXSDNEBQM3M_BASEURL_5I1BMQ_Cspvar.set/ProcessVariableName(
+        spvar.setPublishState((byte) 2);
+        spvar.setReadOnly("false");
+        spvar.setRequired("false");
+        spvar.setSelected("true");
+        spvar.setShared("false");
+//            spvar.setSharedIn EmptyList="true"(spvar.set/SharedIn(
+//            spvar.setTestVarInfoId(spvar.set/TestVarInfoId(
+        spvar.setType((byte) 1);
+        spvar.setTypeDescription("string");
+        spvar.setValue(value);
+        spvar.setVersionNumber(6.4f);
+        spvar.setWhereClauseOp((byte) 0);
+//            spvar.setWhoModified></WhoModified>
+
+
+        return spvar;
     }
 
 }

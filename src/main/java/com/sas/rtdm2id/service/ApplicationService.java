@@ -14,6 +14,8 @@ import com.sas.rtdm2id.model.dto.rtdm.model.OAuthTokenResponse;
 import com.sas.rtdm2id.model.id.core.Folder;
 import com.sas.rtdm2id.model.id.decision.Decision;
 import com.sas.rtdm2id.model.rtdm.Batch;
+import com.sas.rtdm2id.model.rtdm.FlowDO;
+import com.sas.rtdm2id.otp.OtpGroovyEngineConfig;
 import com.sas.rtdm2id.otp.OtpService;
 import com.sas.rtdm2id.util.Converter;
 import com.sas.rtdm2id.util.MarshallerWrapper;
@@ -37,6 +39,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -51,12 +54,13 @@ public class ApplicationService {
     private final TreeUtil treeUtil;
     private final MapStorage mapStorage;
     private final OtpService otpService;
+    private final OtpGroovyEngineConfig otpGroovyEngineConfig;
     Map<String, OAuthTokenResponse> oAuthTokenResponseMap = new HashMap<>();
     Map<String, Instant> expirationTimeMap = new HashMap<>();
 
     public ApplicationService(RestTemplate restTemplate, MarshallerWrapper marshallerWrapper, Converter converter,
                               ProcessNodeConverter processNodeConverter, SubDiagramNodeConverter subDiagramNodeConverter,
-                              CommonProcessing commonProcessing, TreeUtil treeUtil, MapStorage mapStorage, OtpService otpService) {
+                              CommonProcessing commonProcessing, TreeUtil treeUtil, MapStorage mapStorage, OtpService otpService, OtpGroovyEngineConfig otpGroovyEngineConfig) {
         this.restTemplate = restTemplate;
         this.marshallerWrapper = marshallerWrapper;
         this.converter = converter;
@@ -66,6 +70,7 @@ public class ApplicationService {
         this.treeUtil = treeUtil;
         this.mapStorage = mapStorage;
         this.otpService = otpService;
+        this.otpGroovyEngineConfig = otpGroovyEngineConfig;
     }
 
     public OAuthTokenResponse getAccessToken(String baseIp, String login, String password, String protocol) {
@@ -128,7 +133,15 @@ public class ApplicationService {
                 String folderName = batch.getLogicalUnit().getCampaignDO().getName();
                 Folder folder = otpService.findOrAddFolder( baseIp, folderName, accessToken, parentFolderUri, protocol);
 
+//                Folder spFolder = otpService.findOrAddFolder( baseIp, folderName, accessToken, parentFolderUri + "/" + otpGroovyEngineConfig.getSpIdPath(), protocol);
+
                 parentFolderUri = "/folders/folders/" + folder.getId();
+
+                FlowDO.GlobalVariableReferences gvr = batch.getLogicalUnit().getFlowDO().getGlobalVariableReferences();
+                gvr.setValue(gvr.getValue() + gvr.getListDelimiter() +
+                    String.join(gvr.getListDelimiter(), List.of(otpGroovyEngineConfig.getUrl(), otpGroovyEngineConfig.getUsername(), otpGroovyEngineConfig.getPassword()))
+                );
+                gvr.setListTypes(gvr.getListTypes() + String.join(gvr.getListDelimiter(), List.of("String", "String", "String")));
 
                 mapStorage.setParentFolderUri(parentFolderUri);
                 processNodeConverter.createCustomNodes(batch);

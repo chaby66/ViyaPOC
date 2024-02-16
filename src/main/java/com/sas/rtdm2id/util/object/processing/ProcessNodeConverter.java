@@ -17,12 +17,11 @@ import com.sas.rtdm2id.model.id.rules.Signature;
 import com.sas.rtdm2id.model.rtdm.*;
 import com.sas.rtdm2id.model.rtdm.extension.Value;
 import com.sas.rtdm2id.model.rtdm.extension.VarRef;
+import com.sas.rtdm2id.otp.OtpGroovyEngineConfig;
 import com.sas.rtdm2id.otp.OtpService;
 import com.sas.rtdm2id.util.ViyaApi;
 import com.sas.rtdm2id.util.model.IBVariableDO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -45,6 +44,7 @@ public class ProcessNodeConverter {
     private final CommonProcessing commonProcessing;
     private final MapStorage mapStorage;
     private final OtpService otpService;
+    private final OtpGroovyEngineConfig otpGroovyEngineConfig;
 
     private static final String PACKAGE_NAME_REGEX = "(\n\\s*package\\s+)([^\\s/;]+)(.*)";//"(?<!dcl\\s{1,1000}|declare\\s{1,1000}|returns\\s{1,1000}|in_out\\s{1,1000}|end|[,\\(]\\s{0,10000})package\\s+[^\\s/;]+";
     private static final Pattern packageNamePattern = Pattern.compile(PACKAGE_NAME_REGEX,Pattern.CASE_INSENSITIVE);
@@ -57,8 +57,6 @@ public class ProcessNodeConverter {
 
     private static final String EMPTY_STRING = "";
 
-    @Autowired
-    Environment env;
 
     // RTDM IBVariableValueDO variable type constants
     public static final int VAR_VALUE_TYPE_DOUBLE = 1;
@@ -78,11 +76,12 @@ public class ProcessNodeConverter {
 
     public static final String FALSE_STRING = "false";
 
-    public ProcessNodeConverter(RestTemplate restTemplate, CommonProcessing commonProcessing, MapStorage mapStorage, OtpService otpService) {
+    public ProcessNodeConverter(RestTemplate restTemplate, CommonProcessing commonProcessing, MapStorage mapStorage, OtpService otpService, OtpGroovyEngineConfig otpGroovyEngineConfig) {
         this.restTemplate = restTemplate;
         this.commonProcessing = commonProcessing;
         this.mapStorage = mapStorage;
         this.otpService = otpService;
+        this.otpGroovyEngineConfig = otpGroovyEngineConfig;
     }
 
     public List<Step> addCustomObjectStep(ProcessNodeDataDO.Process process, Decision decision, Short objId,
@@ -97,6 +96,8 @@ public class ProcessNodeConverter {
                 processCustomObjectInputMapping(process, decision, stepList, step);
                 updateRuleSet(process.getInputVariableList(), inputValuesStep, decision);
             }
+
+
             if (process.getOutputVariableList() != null) {
                 if (commonProcessing.isProcessNotDataProcess(process.getProcessTypeDescription()) || !isDataProcessReturnDataGrid(process)) {
                     processCustomObjectMapping(process, step, decision);
@@ -245,10 +246,15 @@ public class ProcessNodeConverter {
                 if (PROCESS_TYPE_READ_DATA == process.getProcess().getProcessType()) {
                     codeFileCollection
                         = commonProcessing.getCodeFileCollection(mapStorage.getBaseIp(), process.getProcess().getPhysicalName(), accessToken, "/decisions/codeFiles");
-
                 } else {
-                    codeFileCollection
-                        = commonProcessing.getCodeFileCollectionByDescription(baseIp, process.getProcess().getId(), accessToken, "/decisions/codeFiles");
+                    if (otpService.isOtpEnvironment() &&
+                            GROOVY_CONSTANT.equalsIgnoreCase(process.getProcess().getProcessTypeDescription())) {
+                        codeFileCollection
+                                = commonProcessing.getCodeFileCollection(baseIp, process.getProcess().getPhysicalActivityName(), accessToken, "/decisions/codeFiles");
+                    } else {
+                        codeFileCollection
+                                = commonProcessing.getCodeFileCollectionByDescription(baseIp, process.getProcess().getId(), accessToken, "/decisions/codeFiles");
+                    }
                 }
                 
                 if (codeFileCollection != null) {
@@ -418,8 +424,8 @@ public class ProcessNodeConverter {
         } else if (GROOVY_CONSTANT.equals(process.getProcess().getProcessTypeDescription())
                 || WEB_SERVICE_CONSTANT.equals(process.getProcess().getProcessTypeDescription())
                 || BUSINESS_RULES_CONSTANT.equals(process.getProcess().getProcessTypeDescription())) {
-            if (List.of(env.getActiveProfiles()).contains("otp") &&
-                    "Java code".equalsIgnoreCase(process.getProcess().getProcessTypeDescription())) {
+            if (otpService.isOtpEnvironment() &&
+                    GROOVY_CONSTANT.equalsIgnoreCase(process.getProcess().getProcessTypeDescription())) {
                 log.info("Creating ds2 codefile from groovy.");
                 customNodeRequest.setBody(otpService.precessGroovyCode(process));
             } else {
@@ -815,6 +821,36 @@ public class ProcessNodeConverter {
 
     private void processCustomObjectInputMapping(ProcessNodeDataDO.Process process, Decision decision, List<Step> stepList, Step step) {
         IBVariableDOMapperImpl mapper = new IBVariableDOMapperImpl();
+
+        if (otpService.isOtpEnvironment() &&
+                GROOVY_CONSTANT.equalsIgnoreCase(process.getProcessTypeDescription())) {
+            for (String s : List.of("ge_url", "ge_username", "ge_pass")) {
+                String globalVarName = null;
+                switch (s) {
+                    case "ge_url": globalVarName = otpGroovyEngineConfig.getUrl(); break;
+                    case "ge_username": globalVarName = otpGroovyEngineConfig.getUsername(); break;
+                    case "ge_pass": globalVarName = otpGroovyEngineConfig.getPassword(); break;
+                }
+
+                if (globalVarName != null) {
+                    ValueTypeVarInfoDO varInfo = otpService.createValueTypeVarInfoDOForGlobalVar(globalVarName);
+                    ProcessNodeDataDO.Process.InputVariableList.IBVariableDO.Value value = otpService.createValue(varInfo);
+                    ProcessNodeDataDO.Process.InputVariableList.IBVariableDO spvar = otpService.createIBVariableDO(s, value);
+
+                    process.getInputVariableList().getIBVariableDOs().add(spvar);
+                }
+
+            }
+
+            ProcessNodeDataDO.Process.InputVariableList.IBVariableDO.Value value = otpService.createValue(process.getPhysicalName());
+            ProcessNodeDataDO.Process.InputVariableList.IBVariableDO spvar = otpService.createIBVariableDO("sp_name", value);
+            process.getInputVariableList().getIBVariableDOs().add(spvar);
+
+            value = otpService.createValue("This is the correlation_id");
+            spvar = otpService.createIBVariableDO("correlation_id", value);
+            process.getInputVariableList().getIBVariableDOs().add(spvar);
+
+        }
 
         for (ProcessNodeDataDO.Process.InputVariableList.IBVariableDO ibVariableDO : process.getInputVariableList().getIBVariableDOs()) {
             IBVariableDO ibVariableDOMapped = mapper.ibVariableDoGet(ibVariableDO);
