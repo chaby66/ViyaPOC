@@ -93,14 +93,12 @@ public class ApplicationService {
         }
     }
 
-    public String createDiagram(String baseIp, Batch batch, String token, String login, String password, String protocol, String parentFolderUri) {
+    public String createDiagram(String baseIp, Batch batch, String token, String login, String password, String protocol, String parentFolderUri) throws Exception {
         OAuthTokenResponse oAuthTokenResponse;
 
         if (StringUtils.isNotEmpty(token)) {
-            oAuthTokenResponse = OAuthTokenResponse.builder()
-                    .accessToken(token)
-                    .expiresIn(3600)
-                    .build();
+
+            oAuthTokenResponse = otpService.getAuthTokenFromAuthorizationCode(baseIp, token, protocol);
 
             oAuthTokenResponseMap.put(baseIp, oAuthTokenResponse);
 
@@ -127,10 +125,12 @@ public class ApplicationService {
                 GenericTree<Short> tree = treeUtil.createTree(batch.getLogicalUnit());
                 String accessToken = oAuthTokenResponse.getAccessToken();
 
-                String folderName = parentFolderUri + "/" + batch.getLogicalUnit().getCampaignDO().getName();
+                String folderName = batch.getLogicalUnit().getCampaignDO().getName();
                 Folder folder = otpService.findOrAddFolder( baseIp, folderName, accessToken, parentFolderUri, protocol);
 
-                mapStorage.setParentFolderUri(folderName);
+                parentFolderUri = "/folders/folders/" + folder.getId();
+
+                mapStorage.setParentFolderUri(parentFolderUri);
                 processNodeConverter.createCustomNodes(batch);
                 commonProcessing.createRuleSets(batch);
                 subDiagramNodeConverter.getSubdiagrams(batch);

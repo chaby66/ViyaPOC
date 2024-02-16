@@ -418,7 +418,8 @@ public class ProcessNodeConverter {
         } else if (GROOVY_CONSTANT.equals(process.getProcess().getProcessTypeDescription())
                 || WEB_SERVICE_CONSTANT.equals(process.getProcess().getProcessTypeDescription())
                 || BUSINESS_RULES_CONSTANT.equals(process.getProcess().getProcessTypeDescription())) {
-            if (List.of(env.getActiveProfiles()).contains("otp")) {
+            if (List.of(env.getActiveProfiles()).contains("otp") &&
+                    "Java code".equalsIgnoreCase(process.getProcess().getProcessTypeDescription())) {
                 log.info("Creating ds2 codefile from groovy.");
                 customNodeRequest.setBody(otpService.precessGroovyCode(process));
             } else {

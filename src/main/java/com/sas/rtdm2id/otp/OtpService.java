@@ -1,23 +1,30 @@
 package com.sas.rtdm2id.otp;
 
-import com.sas.rtdm2id.mapper.exception.FolderCreationException;
+import com.sas.rtdm2id.model.dto.rtdm.model.OAuthTokenResponse;
 import com.sas.rtdm2id.model.id.core.Folder;
-import com.sas.rtdm2id.model.id.core.FolderCollection;
 import com.sas.rtdm2id.model.id.core.Member;
 import com.sas.rtdm2id.model.id.decision.SignatureTerm;
+import com.sas.rtdm2id.model.rtdm.Batch;
 import com.sas.rtdm2id.model.rtdm.ProcessNodeDataDO;
 import com.sas.rtdm2id.util.ViyaApi;
 import com.sas.rtdm2id.util.object.processing.CommonProcessing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static com.sas.rtdm2id.util.model.RTDM2IDConstants.DOUBLE_CONSTANT;
 
@@ -60,6 +67,7 @@ public class OtpService {
         List<String> outVars = process.getOutputVariableList().getIBVariableDOs().stream()
                 .map(ProcessNodeDataDO.Process.OutputVariableList.IBVariableDO::getPhysicalName).collect(Collectors.toList());
 
+        log.info("SAS process: {}", spName);
         log.info("Input variables: {}", inVars);
         log.info("Output variables: {}", outVars);
 
@@ -144,7 +152,7 @@ public class OtpService {
 
         ds2Code.append("  end;").append(NEW_LINE_STRING);
         ds2Code.append("endpackage;").append(NEW_LINE_STRING);
-        //ds2Code.append("run;").append(NEW_LINE_STRING);
+        ds2Code.append("run;").append(NEW_LINE_STRING);
 
         process.setDs2code(ds2Code.toString());
 
@@ -168,7 +176,7 @@ public class OtpService {
         variable
                 .append(datatypeOfVarString)
                 .append(" ")
-                .append(ibVariableDO.getName());
+                .append(ibVariableDO.getPhysicalName());
         return variable.toString();
     }
 
@@ -183,13 +191,13 @@ public class OtpService {
                 || datatypeOfVar.equals(SignatureTerm.DataTypeEnum.INTEGER)) {
             datatypeOfVarString = DOUBLE_CONSTANT;
         } else {
-            datatypeOfVarString = "varchar";
+            datatypeOfVarString = "varchar("+DEFAULT_VARCHAR_LENGTH+")";
         }
         if (direction.equals(PARAM_OUT)) variable.append("in_out ");
         variable
                 .append(datatypeOfVarString)
                 .append(" ")
-                .append(ibVariableDO.getName());
+                .append(ibVariableDO.getPhysicalName());
         return variable.toString();
     }
 
@@ -218,7 +226,7 @@ public class OtpService {
 
             if ("data grid".equalsIgnoreCase(ibVariableDO.getTypeDescription())) {
                 result.append(DS2_INDENT)
-                        .append(String.format("rc = py.setString('%s', datagrid_tostring(%s));  ", parName, parName))
+                        .append(String.format("rc = py.setString('%s', %s.serialize());  ", parName, parName))
                         .append(NEW_LINE_STRING);
             } else {
                 result.append(DS2_INDENT)
@@ -266,83 +274,88 @@ public class OtpService {
         return new HttpEntity<>(body, headers);
     }
 
+    public OAuthTokenResponse getAuthTokenFromAuthorizationCode(String baseIp, String authorizationCode, String protocol) throws Exception {
+
+        URI uri = ViyaApi.createUri(baseIp, "/SASLogon/oauth/token", protocol);
+        String body = String.format("grant_type=authorization_code&code=%s", authorizationCode);
+        HttpHeaders header = new HttpHeaders();
+        header.setBasicAuth("sas.cli","");
+        header.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        ResponseEntity<OAuthTokenResponse> oauth = restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(body, header), OAuthTokenResponse.class);
+        if (oauth.getStatusCode().value() != 200) {
+            throw new Exception("Token generation failed!");
+        }
+
+        return oauth.getBody();
+    }
+
     public Folder findOrAddFolder(String baseIp, String folderName, String accessToken, String parentFolderUri, String protocol)
             throws Exception {
 
         URI uri = ViyaApi.createUri(baseIp, "/folders/folders/@item?path="+parentFolderUri+"/"+folderName, protocol);
-        ResponseEntity<Member> member = restTemplate.exchange(uri, HttpMethod.GET, createHTTPEntity(accessToken, null), Member.class);
-        if (member.getStatusCode().value() == 200) {
-            uri = ViyaApi.createUri(baseIp, "/folders/folders/" + Objects.requireNonNull(member.getBody()).getId(), protocol);
-            ResponseEntity<Folder> folderResp = restTemplate.exchange(uri, HttpMethod.GET, createHTTPEntity(accessToken, null), Folder.class);
-            return folderResp.getBody();
-        }
-
-        uri = ViyaApi.createUri(baseIp, "/folders/folders/@item?path="+parentFolderUri, protocol);
-        ResponseEntity<Member> parentMember = restTemplate.exchange(uri, HttpMethod.GET, createHTTPEntity(accessToken, null), Member.class);
-        if (parentMember.getStatusCode().value() != 200) {
-            throw new Exception("ParentFolder not found!");
-        }
-
-        Folder newFolder = new Folder();
-        newFolder.setName(folderName);
-        newFolder.setDescription(folderName);
-        newFolder.setType("folder");
-        URI uriCreate = ViyaApi.createUri(baseIp, "/folders/folders", protocol);
-        ResponseEntity<Folder> createFolder = restTemplate.exchange(uriCreate, HttpMethod.POST, createHTTPEntity(accessToken, newFolder), Folder.class);
-        if (createFolder.getStatusCode().value() != 200) {
-            throw new Exception("Folder creation failed! (HTTP StatusCode: "+createFolder.getStatusCode().value()+")");
-        }
-
-        return createFolder.getBody();
-    }
-
-    public Folder findOrAddSubFolder(String baseIp, String folderName, String accessToken, String parentFolderUri, String protocol) {
-        Folder folder = null;
         try {
-            URI uri = ViyaApi.createUriWithParams(baseIp, "/folders/folders", "name", folderName, protocol);
+            ResponseEntity<Member> member = restTemplate.exchange(uri, HttpMethod.GET, createHTTPEntity(accessToken, null), Member.class);
+            if (member.getStatusCode().value() == 200) {
+                uri = ViyaApi.createUri(baseIp, "/folders/folders/" + Objects.requireNonNull(member.getBody()).getId(), protocol);
+                ResponseEntity<Folder> folderResp = restTemplate.exchange(uri, HttpMethod.GET, createHTTPEntity(accessToken, null), Folder.class);
+                return folderResp.getBody();
+            }
+        } catch (HttpClientErrorException.NotFound e) {
 
-            ResponseEntity<FolderCollection> getResponse = restTemplate.exchange(
-                    uri, HttpMethod.GET, ViyaApi.createGetByNameForFolders(accessToken), FolderCollection.class);
-            if (getResponse.getStatusCode().value() == 200) {
-                Optional<Folder> first = getResponse.getBody()
-                        .getItems()
-                        .stream()
-                        .filter(o -> o.getParentFolderUri().endsWith(parentFolderUri))
-                        .findFirst();
-                if (first.isPresent()) {
-                    folder = first.get();
-                } else {
-                    // Create folder
-                    log.info("Creating folder \"{}\"", folderName);
-                    folder = new Folder();
-                    folder.setName(folderName);
-                    folder.setDescription(folderName);
-                    folder.setType("folder");
-
-                    ResponseEntity<Folder> getResponseCreate = restTemplate.exchange(
-                            baseIp + "/folders/folders?" +
-                                    "parentFolderUri=" +
-                                    "/folders/folders/"+parentFolderUri
-                            , HttpMethod.POST,
-                            ViyaApi.createPostFolders(folder, accessToken), Folder.class);
-                    if (getResponseCreate.getStatusCode().value() == 201) {
-                        folder = getResponseCreate.getBody();
-                    } else {
-                        folder = null;
-                        throw new FolderCreationException(String.format("Folder create error! (HttpStatusCode: %d)",getResponseCreate.getStatusCode().value()));
-                    }
-                }
-
-            } else {
-                throw new FolderCreationException(String.format("Folder find error! (HttpStatusCode: %d)",getResponse.getStatusCode().value()));
+            uri = ViyaApi.createUri(baseIp, "/folders/folders/@item?path="+parentFolderUri, protocol);
+            ResponseEntity<Member> parentMember = restTemplate.exchange(uri, HttpMethod.GET, createHTTPEntity(accessToken, null), Member.class);
+            if (parentMember.getStatusCode().value() != 200) {
+                throw new Exception("ParentFolder not found!");
             }
 
-        } catch (URISyntaxException e) {
-            throw new FolderCreationException(e.getMessage(), e);
+            Folder newFolder = new Folder();
+            newFolder.setName(folderName);
+            newFolder.setDescription(folderName);
+            newFolder.setType("folder");
+            URI uriCreate = ViyaApi.createUri(baseIp, "/folders/folders?parentFolderUri=/folders/folders/" +
+                    Objects.requireNonNull(parentMember.getBody()).getId(), protocol);
+            ResponseEntity<Folder> createFolder = restTemplate.exchange(uriCreate, HttpMethod.POST, createHTTPEntity(accessToken, newFolder), Folder.class);
+            if (createFolder.getStatusCode().value() != 201) {
+                throw new Exception("Folder creation failed! (HTTP StatusCode: "+createFolder.getStatusCode().value()+")");
+            }
+
+            return createFolder.getBody();
+
+
         }
 
-        return folder;
+        return null;
+
     }
 
+    public byte[] extractSasProcesses(Batch batch) throws IOException {
+
+        List<String> processed = new ArrayList<>();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        ZipOutputStream zip = new ZipOutputStream(baos);
+
+        for (ProcessNodeDataDO processNodeDataDO : batch.getLogicalUnit().getProcessNodeDataDOs()) {
+            if ("Java code".equalsIgnoreCase(processNodeDataDO.getProcess().getProcessTypeDescription())) {
+                String spName = processNodeDataDO.getProcess().getPhysicalName();
+                if (!processed.contains(spName)) {
+
+                    byte[] ds2 = processNodeDataDO.getProcess().getDs2code().getBytes(StandardCharsets.UTF_8);
+                    ZipEntry entry = new ZipEntry(spName + ".groovy");
+                    entry.setSize(ds2.length);
+                    zip.putNextEntry(entry);
+                    zip.write(ds2);
+                    zip.closeEntry();
+
+                    processed.add(spName);
+                }
+            }
+        }
+        zip.close();
+
+        return baos.toByteArray();
+    }
 
 }

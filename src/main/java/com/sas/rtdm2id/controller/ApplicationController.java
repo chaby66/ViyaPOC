@@ -8,6 +8,7 @@ import com.sas.rtdm2id.model.dto.Meta;
 import com.sas.rtdm2id.model.dto.Rtdm2IdResponse;
 import com.sas.rtdm2id.model.dto.rtdm.model.ClientIdResponse;
 import com.sas.rtdm2id.model.rtdm.Batch;
+import com.sas.rtdm2id.otp.OtpService;
 import com.sas.rtdm2id.service.ApplicationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,15 +18,19 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @RestController
 @CrossOrigin
 @RequestMapping("api/rtdm2id")
 @Api(tags = "Application methods")
 public class ApplicationController {
     private final ApplicationService applicationService;
+    private final OtpService otpService;
 
-    public ApplicationController(ApplicationService applicationService) {
+    public ApplicationController(ApplicationService applicationService, OtpService otpService) {
         this.applicationService = applicationService;
+        this.otpService = otpService;
     }
 
     @PostMapping(value = "create-diagram", consumes = MediaType.APPLICATION_XML_VALUE)
@@ -38,10 +43,21 @@ public class ApplicationController {
             @ApiParam(value = "login") @RequestParam String login,
             @ApiParam(value = "password") @RequestParam String password,
             @RequestParam(value = "parentFolderUri", defaultValue = "/folders/folders/@myFolder", required = false) String parentFolderUri,
-            @RequestParam(value = "protocol", defaultValue = "http", required = false) String protocol) {
+            @RequestParam(value = "protocol", defaultValue = "http", required = false) String protocol) throws Exception {
         return new ResponseEntity<>(new Rtdm2IdResponse<>(new Meta(0, "OK"), applicationService.createDiagram(baseIp, xml, token, login, password, protocol, parentFolderUri))
                 , HttpStatus.CREATED);
     }
+
+    @PostMapping(value = "extract-sas-processes", consumes = MediaType.APPLICATION_XML_VALUE,
+            produces = "application/zip")
+    @ApiOperation(value = "Extract SAS processes",
+            notes = "Extract SAS processes from RTDM xml")
+    public ResponseEntity<byte[]> extractSasProcesses(
+            @ApiParam(value = "RTDM XML", required = true) @RequestBody Batch xml) throws IOException {
+
+        return new ResponseEntity<>(otpService.extractSasProcesses(xml), HttpStatus.CREATED);
+    }
+
 
     @PostMapping("register-client")
     public ResponseEntity<Rtdm2IdResponse<ClientIdResponse>> registerClient(@ApiParam(value = "Base IP of Viya server", required = true)
