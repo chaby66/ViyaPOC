@@ -35,3 +35,4 @@ build/
 ### Migration Tool ###
 decision.json
 /sp/
+/decision_pretty.json

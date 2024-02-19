@@ -134,7 +134,8 @@ public class Converter {
         switch (rtdmObject.getObjectType()) {
             case CUSTOM_CONSTANT:
                 ProcessNodeDataDO processNodeDataDO = (ProcessNodeDataDO) rtdmObject.getObject();
-                stepList = processNodeConverter.addCustomObjectStep(processNodeDataDO.getProcess(), decision, objId, commonProcessing.makeProcessNodeRuleSetName(processNodeDataDO));
+                stepList = processNodeConverter.addCustomObjectStep(processNodeDataDO.getProcess(), decision, objId,
+                        commonProcessing.makeProcessNodeRuleSetName(processNodeDataDO));
                 break;
             case "multiSelect":
                 MultiSelectNodeDataDO multiSelectNodeDataDO = (MultiSelectNodeDataDO) rtdmObject.getObject();

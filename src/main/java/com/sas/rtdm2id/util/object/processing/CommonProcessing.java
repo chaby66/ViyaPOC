@@ -1130,7 +1130,8 @@ public class CommonProcessing {
         return reducedVariableName;
     }
 
-    public void processAssignmentVariables(Step step, Decision decision, RuleSet ruleSet, RuleSetStep ruleSetForUpdate,List<com.sas.rtdm2id.model.rtdm.extension.IBVariableDO> ibVariableDOs) {
+    public void processAssignmentVariables(Step step, Decision decision, RuleSet ruleSet, RuleSetStep ruleSetForUpdate,
+                                           List<com.sas.rtdm2id.model.rtdm.extension.IBVariableDO> ibVariableDOs) {
         List<Signature> signatureList = new ArrayList<>();
         IBVariableDOMapperImpl mapper = new IBVariableDOMapperImpl();
 

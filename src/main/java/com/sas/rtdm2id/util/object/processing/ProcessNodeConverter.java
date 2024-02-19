@@ -94,7 +94,7 @@ public class ProcessNodeConverter {
         if (process != null) {
             if (process.getInputVariableList() != null) {
                 processCustomObjectInputMapping(process, decision, stepList, step);
-                updateRuleSet(process.getInputVariableList(), inputValuesStep, decision);
+                updateRuleSet(process.getInputVariableList(), inputValuesStep, decision, process.getProcessTypeDescription());
             }
 
 
@@ -172,7 +172,8 @@ public class ProcessNodeConverter {
         }
     }
 
-    public void updateRuleSet(ProcessNodeDataDO.Process.InputVariableList inputVariableList, Step step, Decision decision) {
+    public void updateRuleSet(ProcessNodeDataDO.Process.InputVariableList inputVariableList, Step step, Decision decision,
+                              String processTypeDescription) {
         RuleSet ruleSet = new RuleSet();
         Rule rule = new Rule();
 
@@ -189,8 +190,11 @@ public class ProcessNodeConverter {
             for (ProcessNodeDataDO.Process.InputVariableList.IBVariableDO ibVariableDO : ibVariableDOs) {
                 Signature signature = new Signature();
                 signature.setDataType(commonProcessing.getDatatypeOfVar(ibVariableDO.getTypeDescription()).getValue());
-
-                signature.setName(commonProcessing.sanitizeAndReduceVariableName(ibVariableDO.getName()));
+                if (otpService.isOtpEnvironment() && GROOVY_CONSTANT.equalsIgnoreCase(processTypeDescription)) {
+                    signature.setName(commonProcessing.sanitizeAndReduceVariableName(ibVariableDO.getPhysicalName()));
+                } else {
+                    signature.setName(commonProcessing.sanitizeAndReduceVariableName(ibVariableDO.getName()));
+                }
                 signature.setDirection(IN_OUT_DIRECTION);
                 commonProcessing.checkSignatureTermForDuplicate(IN_OUT_DIRECTION, signatureList, signature);
 
