@@ -9,17 +9,23 @@ import com.sas.rtdm2id.model.rtdm.ProcessNodeDataDO;
 import com.sas.rtdm2id.model.rtdm.ValueTypeVarInfoDO;
 import com.sas.rtdm2id.util.ViyaApi;
 import com.sas.rtdm2id.util.object.processing.CommonProcessing;
+import com.sas.rtdm2id.util.object.processing.ReservedWords;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,12 +46,16 @@ public class OtpService {
     private static final String PARAM_OUT = "out";
     private static final int DEFAULT_VARCHAR_LENGTH = 200;
     private static final String PARAM_FORMAT = "%s %s \"%s\""; //""in_out varchar "fortune""
+    private static final String EMPTY_STRING = "";
+    private static final String UNDERSCORE = "_";
 
     private final OtpGroovyEngineConfig otpGroovyEngineConfig;
     private final CommonProcessing commonProcessing;
     private final RestTemplate restTemplate;
 
     private final Environment env;
+    private final DefaultResourceLoader loader = new DefaultResourceLoader();
+
 
 
     public OtpService(OtpGroovyEngineConfig otpGroovyEngineConfig, CommonProcessing commonProcessing, RestTemplate restTemplate, Environment env) {
@@ -69,9 +79,9 @@ public class OtpService {
         inputsPackage.add("varchar("+DEFAULT_VARCHAR_LENGTH+") correlation_id");
 
         List<String> inVars = process.getInputVariableList().getIBVariableDOs().stream()
-                .map(ProcessNodeDataDO.Process.InputVariableList.IBVariableDO::getPhysicalName).collect(Collectors.toList());
+                .map(p -> makeNameValid(getVarName(p))).collect(Collectors.toList());
         List<String> outVars = process.getOutputVariableList().getIBVariableDOs().stream()
-                .map(ProcessNodeDataDO.Process.OutputVariableList.IBVariableDO::getPhysicalName).collect(Collectors.toList());
+                .map(p -> makeNameValid(getVarName(p))).collect(Collectors.toList());
 
         log.info("SAS process: {}", spName);
         log.info("Input variables: {}", inVars);
@@ -80,18 +90,20 @@ public class OtpService {
         inputsPackage.addAll(process.getInputVariableList()
                 .getIBVariableDOs()
                 .stream()
-                .filter(f -> !outVars.contains(f.getPhysicalName()))
+                .filter(f -> !outVars.contains(getVarName(f)))
                 .map(p -> createInVariablesForExecuteMethod(p, PARAM_IN))
                 .collect(Collectors.toList()));
 
         List<String> inputs = process.getInputVariableList()
                 .getIBVariableDOs()
-                .stream().map(ProcessNodeDataDO.Process.InputVariableList.IBVariableDO::getPhysicalName)
+                .stream().map(this::getVarName)
                 .collect(Collectors.toList());
 
         List<String> inputAssigns = process.getInputVariableList()
                 .getIBVariableDOs()
-                .stream().map(p -> String.format("inputs['%s'] = %s", p.getPhysicalName(), p.getPhysicalName()))
+                .stream().map(p -> SignatureTerm.DataTypeEnum.DATAGRID.equals(commonProcessing.getDatatypeOfVar(p.getTypeDescription())) ?
+                        String.format("inputs['%s'] = json.loads(%s)", getVarName(p), getVarName(p)):
+                        String.format("inputs['%s'] = %s", getVarName(p), getVarName(p)))
                 .collect(Collectors.toList());
 
         List<String> outputsPackage = process.getOutputVariableList()
@@ -102,12 +114,14 @@ public class OtpService {
 
         List<String> outputs = process.getOutputVariableList()
                 .getIBVariableDOs()
-                .stream().map(ProcessNodeDataDO.Process.OutputVariableList.IBVariableDO::getPhysicalName)
+                .stream().map(this::getVarName)
                 .collect(Collectors.toList());
 
         List<String> outputAssigns = process.getOutputVariableList()
                 .getIBVariableDOs()
-                .stream().map(p -> String.format("%s = out['%s']", p.getPhysicalName(), p.getPhysicalName()))
+                .stream().map(p -> SignatureTerm.DataTypeEnum.DATAGRID.equals(commonProcessing.getDatatypeOfVar(p.getTypeDescription())) ?
+                        String.format("%s = json.dumps(out['%s'])", getVarName(p), getVarName(p)):
+                        String.format("%s = out['%s']", getVarName(p), getVarName(p)))
                 .collect(Collectors.toList());
 
 
@@ -162,6 +176,32 @@ public class OtpService {
 
         process.setDs2code(ds2Code.toString());
 
+        if (StringUtils.isNotEmpty(otpGroovyEngineConfig.getSpExtractPath())) {
+            String path = otpGroovyEngineConfig.getSpExtractPath();
+            path += path.endsWith("/") ? "": "/";
+            try {
+                File file = loader.getResource(path + spName + ".groovy").getFile();
+                if (file.exists()) {
+                    if (otpGroovyEngineConfig.isSpExtractOverwrite()) {
+                        if (!file.delete()) {
+                            throw new Exception("File delete failed! (Path: "+path + spName + ")");
+                        }
+                    } else {
+                        throw new FileAlreadyExistsException("SAS process file already exists! (Path: "+path + spName + ".groovy"+")");
+                    }
+                }
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(ds2Code.toString().getBytes(StandardCharsets.UTF_8));
+                fos.flush();
+                fos.close();
+            } catch (FileAlreadyExistsException e) {
+                log.error(e.getLocalizedMessage());
+            } catch (Exception e) {
+                log.error("Extract SAS process failed! (Path: "+path + spName + ".groovy"+")");
+                log.error(e.getLocalizedMessage());
+            }
+        }
+
         return ds2Code.toString();
     }
 
@@ -172,17 +212,20 @@ public class OtpService {
         String datatypeOfVarString;
         if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DATAGRID)) {
             datatypeOfVarString = "package datagrid";
-        } else if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DECIMAL)
-                || datatypeOfVar.equals(SignatureTerm.DataTypeEnum.INTEGER)) {
+        } else if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DECIMAL) ||
+                datatypeOfVar.equals(SignatureTerm.DataTypeEnum.INTEGER) ||
+                datatypeOfVar.equals(SignatureTerm.DataTypeEnum.BOOLEAN) ||
+                datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DATETIME)) {
             datatypeOfVarString = DOUBLE_CONSTANT;
         } else {
             datatypeOfVarString = "varchar("+DEFAULT_VARCHAR_LENGTH+")";
         }
+
         if (direction.equals(PARAM_OUT)) variable.append("in_out ");
         variable
                 .append(datatypeOfVarString)
                 .append(" ")
-                .append(ibVariableDO.getPhysicalName());
+                .append(getVarName(ibVariableDO));
         return variable.toString();
     }
 
@@ -193,8 +236,10 @@ public class OtpService {
         String datatypeOfVarString;
         if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DATAGRID)) {
             datatypeOfVarString = "package datagrid";
-        } else if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DECIMAL)
-                || datatypeOfVar.equals(SignatureTerm.DataTypeEnum.INTEGER)) {
+        } else if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DECIMAL) ||
+                datatypeOfVar.equals(SignatureTerm.DataTypeEnum.INTEGER) ||
+                datatypeOfVar.equals(SignatureTerm.DataTypeEnum.BOOLEAN) ||
+                datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DATETIME)) {
             datatypeOfVarString = DOUBLE_CONSTANT;
         } else {
             datatypeOfVarString = "varchar("+DEFAULT_VARCHAR_LENGTH+")";
@@ -203,7 +248,7 @@ public class OtpService {
         variable
                 .append(datatypeOfVarString)
                 .append(" ")
-                .append(ibVariableDO.getPhysicalName());
+                .append(getVarName(ibVariableDO));
         return variable.toString();
     }
 
@@ -221,12 +266,14 @@ public class OtpService {
         for (ProcessNodeDataDO.Process.InputVariableList.IBVariableDO ibVariableDO
                 : inVariableDOs) {
 
-            String parName = ibVariableDO.getPhysicalName();
+            String parName = getVarName(ibVariableDO);
             SignatureTerm.DataTypeEnum datatypeOfVar = commonProcessing.getDatatypeOfVar(ibVariableDO.getTypeDescription());
 
             String setter = "String";
-            if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DECIMAL)
-                    || datatypeOfVar.equals(SignatureTerm.DataTypeEnum.INTEGER)) {
+            if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DECIMAL) ||
+                    datatypeOfVar.equals(SignatureTerm.DataTypeEnum.INTEGER) ||
+                    datatypeOfVar.equals(SignatureTerm.DataTypeEnum.BOOLEAN) ||
+                    datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DATETIME)) {
                 setter = "Double";
             }
 
@@ -249,12 +296,14 @@ public class OtpService {
         for (ProcessNodeDataDO.Process.OutputVariableList.IBVariableDO ibVariableDO
                 : outVariableDOs) {
 
-            String parName = ibVariableDO.getPhysicalName();
+            String parName = getVarName(ibVariableDO);
             SignatureTerm.DataTypeEnum datatypeOfVar = commonProcessing.getDatatypeOfVar(ibVariableDO.getTypeDescription());
 
             String setter = "String";
-            if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DECIMAL)
-                    || datatypeOfVar.equals(SignatureTerm.DataTypeEnum.INTEGER)) {
+            if (datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DECIMAL) ||
+                    datatypeOfVar.equals(SignatureTerm.DataTypeEnum.INTEGER) ||
+                    datatypeOfVar.equals(SignatureTerm.DataTypeEnum.BOOLEAN) ||
+                    datatypeOfVar.equals(SignatureTerm.DataTypeEnum.DATETIME)) {
                 setter = "Double";
             }
 
@@ -429,7 +478,7 @@ public class OtpService {
         value.setStringValue(stringValue);
         value.setPersisting("false");
         value.setPublishState((byte) 2);
-        value.setType((byte) 11);
+        value.setType((byte) 2);
         value.setVersionNumber(6.4f);
 
         return value;
@@ -484,6 +533,42 @@ public class OtpService {
 
 
         return spvar;
+    }
+
+    private String getVarName(ProcessNodeDataDO.Process.InputVariableList.IBVariableDO ibVariableDO) {
+        return ibVariableDO.getPhysicalName();
+//        return makeNameValid(ibVariableDO.getName());
+    }
+
+    private String getVarName(ProcessNodeDataDO.Process.OutputVariableList.IBVariableDO ibVariableDO) {
+        return ibVariableDO.getPhysicalName();
+//        return makeNameValid(ibVariableDO.getName());
+    }
+
+    private boolean isReservedWord(String value) {
+        return value != null && ReservedWords.isReservedWord(value.toUpperCase() );
+    }
+
+    private String makeNameValid(String name) {
+        if (isReservedWord(name)) {
+            // Some reserved words start with an underscore so to avoid confusion prefix with a letter
+            name = "r" + UNDERSCORE + name;
+        }
+
+        // Check if the string starts with a numeric character
+        boolean startsWithNumeric = Character.isDigit(name.charAt(0));
+
+        // If it starts with a numeric character, prefix with an underscore
+        if (startsWithNumeric) {
+            name = UNDERSCORE + name;
+        }
+
+        if (name.matches("(?i)[a-z][a-z0-9_]*")) {
+            return name;
+        } else {
+            // signature item only allows alphanumeric and underscore
+            return name.replaceAll("[^a-zA-Z0-9_]", EMPTY_STRING);
+        }
     }
 
 }

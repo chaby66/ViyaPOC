@@ -133,7 +133,7 @@ public class ApplicationService {
                 String folderName = batch.getLogicalUnit().getCampaignDO().getName();
                 Folder folder = otpService.findOrAddFolder( baseIp, folderName, accessToken, parentFolderUri, protocol);
 
-//                Folder spFolder = otpService.findOrAddFolder( baseIp, folderName, accessToken, parentFolderUri + "/" + otpGroovyEngineConfig.getSpIdPath(), protocol);
+//                Folder spFolder = otpService.findOrAddFolder( baseIp, folderName, accessToken, parentFolderUri + "/" + otpGroovyEngineConfig.getSpSubdir(), protocol);
 
                 parentFolderUri = "/folders/folders/" + folder.getId();
 

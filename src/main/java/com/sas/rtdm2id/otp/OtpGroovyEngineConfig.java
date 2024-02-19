@@ -24,7 +24,9 @@ public class OtpGroovyEngineConfig {
     private String pythonRestCallTemplateName;
     @ToString.Exclude
     private byte[] pythonRestCallTemplate;
-    private String spIdPath;
+    private String spIdSubdir;
+    private String spExtractPath;
+    private boolean spExtractOverwrite;
 
     public OtpGroovyEngineConfig() {
         super();
